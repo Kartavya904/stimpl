@@ -1,8 +1,10 @@
 # Kartavya Singh Singhk6 M14537829
 # PL Homework 2: STIMPL
 # Runtime for STIMPL
+
 from typing import Any, Tuple, Optional
 
+# Importing necessary modules from your implementation
 from stimpl.expression import *
 from stimpl.types import *
 from stimpl.errors import *
@@ -11,6 +13,7 @@ from stimpl.errors import *
 Interpreter State
 """
 
+# Define the State class for maintaining the interpreter state
 class State(object):
     def __init__(self, variable_name: str, variable_value: Expr, variable_type: Type, next_state: 'State') -> None:
         self.variable_name = variable_name
@@ -34,11 +37,10 @@ class State(object):
             current_state = current_state.next_state
         return None
 
-
     def __repr__(self) -> str:
         return f"{self.variable_name}: {self.value}, " + repr(self.next_state)
 
-
+# Define the EmptyState class as a subclass of State
 class EmptyState(State):
     def __init__(self):
         pass
@@ -52,29 +54,34 @@ class EmptyState(State):
     def __repr__(self) -> str:
         return ""
 
-
 """
 Main evaluation logic!
 """
 
-
+# Define the evaluate function for interpreting expressions
 def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State]:
     match expression:
+        # Handling the Ren expression
         case Ren():
             return (None, Unit(), state)
 
+        # Handling integer literal expression
         case IntLiteral(literal=l):
             return (l, Integer(), state)
 
+        # Handling floating-point literal expression
         case FloatingPointLiteral(literal=l):
             return (l, FloatingPoint(), state)
 
+        # Handling string literal expression
         case StringLiteral(literal=l):
             return (l, String(), state)
 
+        # Handling boolean literal expression
         case BooleanLiteral(literal=l):
             return (l, Boolean(), state)
 
+        # Handling the Print expression
         case Print(to_print=to_print):
             printable_value, printable_type, new_state = evaluate(to_print, state)
 
@@ -86,6 +93,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
 
             return (printable_value, printable_type, new_state)
 
+        # Handling sequence and program expressions
         case Sequence(exprs=exprs) | Program(exprs=exprs):
             value_result = None
             value_type = Unit()
@@ -94,6 +102,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
                 value_result, value_type, new_state = evaluate(expr, new_state)
             return (value_result, value_type, new_state)
 
+        # Handling variable expression
         case Variable(variable_name=variable_name):
             value = state.get_value(variable_name)
             if value == None:
@@ -102,8 +111,8 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
             variable_value, variable_type = value
             return (variable_value, variable_type, state)
 
+        # Handling assignment expression
         case Assign(variable=variable, value=value):
-
             value_result, value_type, new_state = evaluate(value, state)
 
             variable_from_state = new_state.get_value(variable.variable_name)
@@ -118,6 +127,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
                 variable.variable_name, value_result, value_type)
             return (value_result, value_type, new_state)
 
+        # Handling addition expression
         case Add(left=left, right=right):
             result = 0
             left_result, left_type, new_state = evaluate(left, state)
@@ -135,6 +145,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
 
             return (result, left_type, new_state)
 
+        # Handling subtraction expression
         case Subtract(left=left, right=right):
             result = 0
             left_result, left_type, new_state = evaluate(left, state)
@@ -152,6 +163,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
             
             return (result, left_type, new_state)
 
+        # Handling multiplication expression
         case Multiply(left=left, right=right):
             result = 0
             left_result, left_type, new_state = evaluate(left, state)
@@ -169,6 +181,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
             
             return (result, left_type, new_state)
 
+        # Handling division expression
         case Divide(left=left, right=right):
             result = 0
             left_result, left_type, new_state = evaluate(left, state)
@@ -191,6 +204,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
             
             return (result, left_type, new_state)
 
+        # Handling logical AND expression
         case And(left=left, right=right):
             left_value, left_type, new_state = evaluate(left, state)
             right_value, right_type, new_state = evaluate(right, new_state)
@@ -207,6 +221,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
 
             return (result, left_type, new_state)
 
+        # Handling logical OR expression
         case Or(left=left, right=right):
             left_value, left_type, new_state = evaluate(left, state)
             right_value, right_type, new_state = evaluate(right, new_state)
@@ -223,6 +238,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
 
             return (result, left_type, new_state)
 
+        # Handling logical NOT expression
         case Not(expr=expr):
             value, value_type, new_state = evaluate(expr, state)
             match value_type:
@@ -234,6 +250,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
 
             return (result, value_type, new_state)
 
+        # Handling IF-ELSE expression
         case If(condition=condition, true=true, false=false):
             condition_value, condition_type, new_state = evaluate(condition, state)
 
@@ -246,6 +263,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
             else:
                 return evaluate(true, new_state)
 
+        # Handling LESS THAN expression
         case Lt(left=left, right=right):
             left_value, left_type, new_state = evaluate(left, state)
             right_value, right_type, new_state = evaluate(right, new_state)
@@ -267,6 +285,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
 
             return (result, Boolean(), new_state)
 
+        # Handling LESS THAN OR EQUAL TO expression
         case Lte(left=left, right=right):
             left_value, left_type, new_state = evaluate(left, state)
             right_value, right_type, new_state = evaluate(right, new_state)
@@ -288,6 +307,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
 
             return (result, Boolean(), new_state)
 
+        # Handling GREATER THAN expression
         case Gt(left=left, right=right):
             left_value, left_type, new_state = evaluate(left, state)
             right_value, right_type, new_state = evaluate(right, new_state)
@@ -309,6 +329,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
 
             return (result, Boolean(), new_state)
 
+        # Handling GREATER THAN OR EQUAL TO expression
         case Gte(left=left, right=right):
             left_value, left_type, new_state = evaluate(left, state)
             right_value, right_type, new_state = evaluate(right, new_state)
@@ -330,6 +351,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
 
             return (result, Boolean(), new_state)
 
+        # Handling EQUAL TO expression
         case Eq(left=left, right=right):
             left_value, left_type, new_state = evaluate(left, state)
             right_value, right_type, new_state = evaluate(right, new_state)
@@ -351,6 +373,7 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
 
             return (result, Boolean(), new_state)
 
+        # Handling NOT EQUAL TO expression
         case Ne(left=left, right=right):
             left_value, left_type, new_state = evaluate(left, state)
             right_value, right_type, new_state = evaluate(right, new_state)
@@ -372,9 +395,23 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
 
             return (result, Boolean(), new_state)
 
+        # case While(condition=condition, body=body):
+        #     condition_value, condition_type, new_state = evaluate(condition, state)
+
+        #     if condition_type != Boolean():
+        #         raise InterpTypeError(
+        #             "Condition in While loop must be of Boolean type.")
+
+        #     while condition_value:
+        #         body_value, body_type, new_state = evaluate(body, new_state)
+        #         condition_value, _, new_state = evaluate(condition, new_state)
+
+        #     return (None, Unit(), new_state)
+        #Handling While loop expression
         case While(condition=condition, body=body):
             condition_value, condition_type, new_state = evaluate(condition, state)
-
+            body_value = None
+            body_type = Unit()
             if condition_type != Boolean():
                 raise InterpTypeError(
                     "Condition in While loop must be of Boolean type.")
@@ -383,13 +420,13 @@ def evaluate(expression: Expr, state: State) -> Tuple[Optional[Any], Type, State
                 body_value, body_type, new_state = evaluate(body, new_state)
                 condition_value, _, new_state = evaluate(condition, new_state)
 
-            return (None, Unit(), new_state)
+            return (body_value, body_type, new_state)  # Use the final state of the while loop
 
         case _:
             raise InterpSyntaxError("Unhandled!")
     pass
 
-
+# Define the run_stimpl function for running STIMPL programs
 def run_stimpl(program, debug=False):
     state = EmptyState()
     program_value, program_type, program_state = evaluate(program, state)
